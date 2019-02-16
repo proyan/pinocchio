@@ -11,6 +11,8 @@
 #include <eigenpy/eigenpy.hpp>
 #include "pinocchio/bindings/python/utils/std-vector.hpp"
 #include "pinocchio/bindings/python/utils/std-aligned-vector.hpp"
+#include <boost/python/tuple.hpp>
+#include <boost/python/list.hpp>
 
 EIGENPY_DEFINE_STRUCT_ALLOCATOR_SPECIALIZATION(pinocchio::Data)
 
@@ -50,8 +52,7 @@ namespace pinocchio
       void visit(PyClass& cl) const 
       {
         cl
-        .def(bp::init<Model>(bp::arg("model"),"Constructs a data structure from a given model."))
-        
+        .def(bp::init<Model>(bp::arg("model"),"Constructs a data structure from a given model."))     
         .ADD_DATA_PROPERTY(container::aligned_vector<Motion>,a,"Joint spatial acceleration")
         .ADD_DATA_PROPERTY(container::aligned_vector<Motion>,a_gf,"Joint spatial acceleration containing also the contribution of the gravity acceleration")
         .ADD_DATA_PROPERTY(container::aligned_vector<Motion>,v,"Joint spatial velocity expressed in the joint frame.")
@@ -115,7 +116,10 @@ namespace pinocchio
                          "Articulated rigid body data.\n"
                          "It contains all the data that can be modified by the algorithms.",
                          bp::no_init)
-        .def(DataPythonVisitor());
+        .def("__init__", +[](DataPythonVisitor){
+            return bp::make_tuple();})
+        .def(DataPythonVisitor())
+        .def_pickle(Pickle());
         StdAlignedVectorPythonVisitor<Vector3, true>::expose("StdVec_vec3d");
         StdAlignedVectorPythonVisitor<Matrix6x, true>::expose("StdMat_Matrix6x");
         StdVectorPythonVisitor<int>::expose("StdVec_int");
@@ -123,8 +127,110 @@ namespace pinocchio
         eigenpy::enableEigenPySpecific<Data::RowMatrixXs>();
       }
 
+    private:
+
+      struct Pickle : bp::pickle_suite
+      { 
+        //static bp::tuple getinitargs(const Model&) {    return bp::make_tuple();      }
+        static bp::tuple getstate(bp::object op)
+        {
+          const Data& d = bp::extract<const Data&>(op)();
+          bp::list lt;
+          lt.append(d.a);
+          lt.append(d.a_gf);
+          lt.append(d.v);
+          lt.append(d.f);
+          lt.append(d.oMi);
+          lt.append(d.oMf);
+          lt.append(d.liMi);
+          lt.append(d.tau);
+          lt.append(d.nle);
+          lt.append(d.ddq);
+          lt.append(d.Ycrb);
+          lt.append(d.M);
+          lt.append(d.Minv);
+          lt.append(d.C);
+          lt.append(d.Fcrb);
+          lt.append(d.lastChild);
+          lt.append(d.nvSubtree);
+          lt.append(d.U);
+          lt.append(d.D);
+          lt.append(d.parents_fromRow);
+          lt.append(d.nvSubtree_fromRow);
+          lt.append(d.J);
+          lt.append(d.dJ);
+          lt.append(d.iMf);
+          lt.append(d.Ag);
+          lt.append(d.dAg);
+          lt.append(d.hg);
+          lt.append(d.Ig);
+          lt.append(d.com);
+          lt.append(d.vcom);
+          lt.append(d.acom);
+          lt.append(d.mass);
+          lt.append(d.Jcom);
+          lt.append(d.C);
+          lt.append(d.dtau_dq);
+          lt.append(d.dtau_dv);
+          lt.append(d.ddq_dq);
+          lt.append(d.ddq_dv);
+          lt.append(d.kinetic_energy);
+          lt.append(d.potential_energy);
+          lt.append(d.lambda_c);
+          lt.append(d.impulse_c);
+          lt.append(d.dq_after);
+          return bp::make_tuple(lt);
+        }
+        static void setstate(bp::object op, bp::tuple tup)
+        {
+          Data& d = bp::extract<Data&>(op)();
+          d.a = bp::extract<container::aligned_vector<Motion> >(tup[0]);
+          d.a_gf = bp::extract<container::aligned_vector<Motion> >(tup[1]);
+          d.v = bp::extract<container::aligned_vector<Motion> >(tup[2]);
+          d.f = bp::extract<container::aligned_vector<Force> >(tup[3]);
+          d.oMi = bp::extract<container::aligned_vector<SE3> >(tup[4]);
+          d.oMf = bp::extract<container::aligned_vector<SE3> >(tup[5]);
+          d.liMi = bp::extract<container::aligned_vector<SE3> >(tup[6]);
+          d.tau = bp::extract<Eigen::VectorXd >(tup[7]);
+          d.nle = bp::extract<Eigen::VectorXd >(tup[8]);
+          d.ddq = bp::extract<Eigen::VectorXd >(tup[9]);
+          d.Ycrb = bp::extract<container::aligned_vector<Inertia> >(tup[10]);
+          d.M = bp::extract<Eigen::MatrixXd >(tup[11]);
+          d.Minv = bp::extract<Data::RowMatrixXs >(tup[12]);
+          d.C = bp::extract<Eigen::MatrixXd >(tup[13]);
+          d.Fcrb = bp::extract<container::aligned_vector<Matrix6x> >(tup[14]);
+          d.lastChild = bp::extract<std::vector<int> >(tup[15]);
+          d.nvSubtree = bp::extract<std::vector<int> >(tup[16]);
+          d.U = bp::extract<Eigen::MatrixXd >(tup[17]);
+          d.D = bp::extract<Eigen::VectorXd >(tup[18]);
+          d.parents_fromRow = bp::extract<std::vector<int> >(tup[19]);
+          d.nvSubtree_fromRow = bp::extract<std::vector<int> >(tup[20]);
+          d.J = bp::extract<Matrix6x >(tup[21]);
+          d.dJ = bp::extract<Matrix6x >(tup[22]);
+          d.iMf = bp::extract<container::aligned_vector<SE3> >(tup[23]);
+          d.Ag = bp::extract<Matrix6x >(tup[24]);
+          d.dAg = bp::extract<Matrix6x >(tup[25]);
+          d.hg = bp::extract<Force >(tup[26]);
+          d.Ig = bp::extract<Inertia >(tup[27]);
+          d.com = bp::extract<container::aligned_vector<Vector3> >(tup[28]);
+          d.vcom = bp::extract<container::aligned_vector<Vector3> >(tup[29]);
+          d.acom = bp::extract<container::aligned_vector<Vector3> >(tup[30]);
+          d.mass = bp::extract<std::vector<double> >(tup[31]);
+          d.Jcom = bp::extract<Matrix3x >(tup[32]);
+          d.C = bp::extract<Eigen::MatrixXd >(tup[33]);
+          d.dtau_dq = bp::extract<Eigen::MatrixXd >(tup[34]);
+          d.dtau_dv = bp::extract<Eigen::MatrixXd >(tup[35]);
+          d.ddq_dq = bp::extract<Eigen::MatrixXd >(tup[36]);
+          d.ddq_dv = bp::extract<Eigen::MatrixXd >(tup[37]);
+          d.kinetic_energy = bp::extract<double >(tup[38]);
+          d.potential_energy = bp::extract<double >(tup[39]);
+          d.lambda_c = bp::extract<Eigen::VectorXd >(tup[40]);
+          d.impulse_c = bp::extract<Eigen::VectorXd >(tup[41]);
+          d.dq_after = bp::extract<Eigen::VectorXd >(tup[42]);
+
+        }
+      };
     };
-    
   }} // namespace pinocchio::python
 
 #endif // ifndef __pinocchio_python_data_hpp__
