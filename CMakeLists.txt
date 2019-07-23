@@ -42,10 +42,10 @@ ELSE(WIN32)
 ENDIF(WIN32)
 
 # --- OPTIONS ----------------------------------------
-OPTION (BUILD_BENCHMARK "Build the benchmarks" OFF)
-OPTION (BUILD_UTILS "Build the utils" OFF)
-OPTION (BUILD_PYTHON_INTERFACE "Build the python binding" ON)
-OPTION (BUILD_WITH_COMMIT_VERSION "Build libraries by setting specific commit version" OFF)
+OPTION(BUILD_BENCHMARK "Build the benchmarks" OFF)
+OPTION(BUILD_UTILS "Build the utils" OFF)
+OPTION(BUILD_PYTHON_INTERFACE "Build the python binding" ON)
+OPTION(BUILD_WITH_COMMIT_VERSION "Build libraries by setting specific commit version" OFF)
 
 IF(DEFINED BUILD_UNIT_TESTS)
   MESSAGE(AUTHOR_WARNING "BUILD_UNIT_TESTS is deprecated. Use BUILD_TESTING instead.\
