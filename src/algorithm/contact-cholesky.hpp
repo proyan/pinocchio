@@ -54,6 +54,21 @@ namespace pinocchio
       /// \brief Size of the decomposition
       Eigen::DenseIndex dim() const { return D.size(); }
       
+      template<typename MatrixLike>
+      void solveInPlace(const Eigen::MatrixBase<MatrixLike> & mat) const;
+      
+      template<typename MatrixLike>
+      void Uv(const Eigen::MatrixBase<MatrixLike> & mat) const;
+      
+      template<typename MatrixLike>
+      void Utv(const Eigen::MatrixBase<MatrixLike> & mat) const;
+      
+      template<typename MatrixLike>
+      void Uiv(const Eigen::MatrixBase<MatrixLike> & mat) const;
+      
+      template<typename MatrixLike>
+      void Utiv(const Eigen::MatrixBase<MatrixLike> & mat) const;
+      
       // data
       Vector D, Dinv;
       Matrix U;
