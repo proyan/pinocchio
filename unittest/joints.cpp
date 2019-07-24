@@ -161,7 +161,8 @@ BOOST_AUTO_TEST_SUITE(JointRevoluteUnboundedUnaligned)
     Data dataRUX(modelRUX);
     Data dataRevoluteUnboundedUnaligned(modelRevoluteUboundedUnaligned);
     
-    Eigen::VectorXd q = Eigen::VectorXd::Ones (modelRUX.nq);
+    Eigen::VectorXd q = Eigen::VectorXd::Ones(modelRUX.nq);
+    q.head<2>().normalize();
     TangentVector v = TangentVector::Ones (modelRUX.nv);
     Eigen::VectorXd tauRX = Eigen::VectorXd::Ones (modelRUX.nv);
     Eigen::VectorXd tauRevoluteUnaligned = Eigen::VectorXd::Ones (modelRevoluteUboundedUnaligned.nv);
@@ -1191,6 +1192,21 @@ BOOST_AUTO_TEST_SUITE_END()
       jmodel.setIndexes(0,0,0);
       return jmodel;
     }
+  };
+
+  template<typename Scalar, int Options>
+  struct init<pinocchio::JointModelRevoluteUnboundedUnalignedTpl<Scalar,Options> >
+  {
+    typedef pinocchio::JointModelRevoluteUnboundedUnalignedTpl<Scalar,Options> JointModel;
+    
+    static JointModel run()
+    {    
+      typedef typename JointModel::Vector3 Vector3;
+      JointModel jmodel(Vector3::Random().normalized());
+           
+      jmodel.setIndexes(0,0,0);
+      return jmodel;
+    }    
   };
   
   template<typename Scalar, int Options>
