@@ -5,6 +5,7 @@
 #ifndef __pinocchio_algorithm_contact_cholesky_hxx__
 #define __pinocchio_algorithm_contact_cholesky_hxx__
 
+#include "pinocchio/algorithm/contact-cholesky.hpp"
 #include "pinocchio/algorithm/check.hpp"
 
 namespace pinocchio
@@ -109,20 +110,39 @@ namespace pinocchio
     template<typename S1, int O1, template<typename,int> class JointCollectionTpl, class Allocator>
     void ContactCholeskyDecompositionTpl<Scalar,Options>::
     compute(const ModelTpl<S1,O1,JointCollectionTpl> & model,
-            const DataTpl<S1,O1,JointCollectionTpl> & data,
+            DataTpl<S1,O1,JointCollectionTpl> & data,
             const std::vector<ContactInfoTpl<S1,O1>,Allocator> & contact_infos,
             const S1 mu)
     {
       typedef ContactInfoTpl<S1,O1> ContactInfo;
+      typedef MotionTpl<Scalar,Options> Motion;
       assert(model.check(data) && "data is not consistent with model.");
       
       const Eigen::DenseIndex total_dim = dim();
       const Eigen::DenseIndex total_constraints_dim = total_dim - nv;
       
+      typedef ModelTpl<Scalar,Options,JointCollectionTpl> Model;
       typedef DataTpl<Scalar,Options,JointCollectionTpl> Data;
       const typename Data::MatrixXs & M = data.M;
       
       const size_t num_ee = contact_infos.size();
+      
+      // Update frame placements if needed
+      for(size_t f = 0; f < num_ee; ++f)
+      {
+        if(contact_infos[f].reference_frame == WORLD) continue; // skip useless computations
+        
+        const typename Model::FrameIndex & parent_frame_id = contact_infos[f].parent;
+        const typename Model::Frame & frame = model.frames[parent_frame_id];
+        typename Data::SE3 & oMf = data.oMf[parent_frame_id];
+        
+        const typename Model::JointIndex & parent_joint_id = model.frames[parent_frame_id].parent;
+        
+        oMf = data.oMi[parent_joint_id] * frame.placement;
+      }
+      
+      // Core
+      Motion Jcol_motion;
       for(Eigen::DenseIndex j=nv-1;j>=0;--j)
       {
         // Classic Cholesky decomposition related to the mass matrix
@@ -149,9 +169,10 @@ namespace pinocchio
           continue;
 
         Eigen::DenseIndex current_row = total_constraints_dim - 1;
+        
         for(size_t k = 0; k < num_ee; ++k)
         {
-          size_t ee_id = num_ee - k - 1; // start from the last end effector
+          const size_t ee_id = num_ee - k - 1; // start from the last end effector
 
           const BooleanVector & indexes = extented_parents_fromRow[ee_id];
           const ContactInfo & cinfo = contact_infos[ee_id];
@@ -159,28 +180,105 @@ namespace pinocchio
 
           if(indexes[jj])
           {
-            switch(cinfo.type)
+            switch(cinfo.reference_frame)
             {
-              case CONTACT_3D:
-                for(Eigen::DenseIndex _i = 0; _i < contact_dim<CONTACT_3D>::value; _i++)
+              case WORLD:
+              {
+                typedef typename Data::Matrix6x::ColXpr ColXpr;
+                ColXpr Jcol = data.J.col(j);
+                MotionRef<ColXpr> Jcol_motion(Jcol);
+                
+                switch(cinfo.type)
                 {
-                  const Eigen::DenseIndex _ii = current_row - _i;
-                  U(_ii,jj) = (data.J(contact_dim<CONTACT_3D>::value-_i-1 + LINEAR,j) - U.row(_ii).segment(jj+1,NVT).dot(DUt_partial)) * Dinv[jj];
+                  case CONTACT_3D:
+                    for(Eigen::DenseIndex _i = 0; _i < contact_dim<CONTACT_3D>::value; _i++)
+                    {
+                      const Eigen::DenseIndex _ii = current_row - _i;
+                      U(_ii,jj) = (Jcol_motion.linear()[contact_dim<CONTACT_3D>::value-_i-1] - U.row(_ii).segment(jj+1,NVT).dot(DUt_partial)) * Dinv[jj];
+                    }
+                    break;
+                    
+                  case CONTACT_6D:
+                    for(Eigen::DenseIndex _i = 0; _i < contact_dim<CONTACT_6D>::value; _i++)
+                    {
+                      const Eigen::DenseIndex _ii = current_row - _i;
+                      U(_ii,jj) = (Jcol_motion.toVector()[contact_dim<CONTACT_6D>::value-_i-1] - U.row(_ii).segment(jj+1,NVT).dot(DUt_partial)) * Dinv[jj];
+                    }
+                    break;
+                    
+                  default:
+                    assert(false && "Must never happened");
                 }
                 break;
-
-              case CONTACT_6D:
-                for(Eigen::DenseIndex _i = 0; _i < contact_dim<CONTACT_6D>::value; _i++)
+              } // end case WORLD
+              case LOCAL:
+              {
+                typedef typename Data::Matrix6x::ColXpr ColXpr;
+                ColXpr Jcol = data.J.col(j);
+                MotionRef<ColXpr> Jcol_motion(Jcol);
+                
+                const typename Data::SE3 & oMf = data.oMf[cinfo.parent];
+                Motion Jcol_local(oMf.actInv(Jcol_motion));
+                
+                switch(cinfo.type)
                 {
-                  const Eigen::DenseIndex _ii = current_row - _i;
-                  U(_ii,jj) = (data.J(contact_dim<CONTACT_6D>::value-_i-1,j) - U.row(_ii).segment(jj+1,NVT).dot(DUt_partial)) * Dinv[jj];
+                  case CONTACT_3D:
+                    for(Eigen::DenseIndex _i = 0; _i < contact_dim<CONTACT_3D>::value; _i++)
+                    {
+                      const Eigen::DenseIndex _ii = current_row - _i;
+                      U(_ii,jj) = (Jcol_local.linear()[contact_dim<CONTACT_3D>::value-_i-1] - U.row(_ii).segment(jj+1,NVT).dot(DUt_partial)) * Dinv[jj];
+                    }
+                    break;
+                    
+                  case CONTACT_6D:
+                    for(Eigen::DenseIndex _i = 0; _i < contact_dim<CONTACT_6D>::value; _i++)
+                    {
+                      const Eigen::DenseIndex _ii = current_row - _i;
+                      U(_ii,jj) = (Jcol_local.toVector()[contact_dim<CONTACT_6D>::value-_i-1] - U.row(_ii).segment(jj+1,NVT).dot(DUt_partial)) * Dinv[jj];
+                    }
+                    break;
+                    
+                  default:
+                    assert(false && "Must never happened");
                 }
                 break;
-
+              } // end case LOCAL
+              case LOCAL_WORLD_ALIGNED:
+              {
+                typedef typename Data::Matrix6x::ColXpr ColXpr;
+                ColXpr Jcol = data.J.col(j);
+                MotionRef<ColXpr> Jcol_motion(Jcol);
+                
+                const typename Data::SE3 & oMf = data.oMf[cinfo.parent];
+                Motion Jcol_local_world_aligned(Jcol_motion);
+                Jcol_local_world_aligned.linear() -= oMf.translation().cross(Jcol_local_world_aligned.angular());
+                
+                switch(cinfo.type)
+                {
+                  case CONTACT_3D:
+                    for(Eigen::DenseIndex _i = 0; _i < contact_dim<CONTACT_3D>::value; _i++)
+                    {
+                      const Eigen::DenseIndex _ii = current_row - _i;
+                      U(_ii,jj) = (Jcol_local_world_aligned.linear()[contact_dim<CONTACT_3D>::value-_i-1] - U.row(_ii).segment(jj+1,NVT).dot(DUt_partial)) * Dinv[jj];
+                    }
+                    break;
+                    
+                  case CONTACT_6D:
+                    for(Eigen::DenseIndex _i = 0; _i < contact_dim<CONTACT_6D>::value; _i++)
+                    {
+                      const Eigen::DenseIndex _ii = current_row - _i;
+                      U(_ii,jj) = (Jcol_local_world_aligned.toVector()[contact_dim<CONTACT_6D>::value-_i-1] - U.row(_ii).segment(jj+1,NVT).dot(DUt_partial)) * Dinv[jj];
+                    }
+                    break;
+                    
+                  default:
+                    assert(false && "Must never happened");
+                }
+                break;
+              } // end case LOCAL
               default:
                 assert(false && "Must never happened");
-            }
-
+            } // end switch(cinfo.reference_frame)
           }
           current_row -= constraint_dim;
         }

@@ -80,7 +80,7 @@ namespace pinocchio
       ///
       template<typename S1, int O1, template<typename,int> class JointCollectionTpl, class Allocator>
       void compute(const ModelTpl<S1,O1,JointCollectionTpl> & model,
-                   const DataTpl<S1,O1,JointCollectionTpl> & data,
+                   DataTpl<S1,O1,JointCollectionTpl> & data,
                    const std::vector<ContactInfoTpl<S1,O1>,Allocator> & contact_infos,
                    const S1 mu = 0.);
       
@@ -138,7 +138,5 @@ namespace pinocchio
   } // namespace cholesky
     
 }
-
-#include "pinocchio/algorithm/contact-cholesky.hxx"
 
 #endif // ifndef __pinocchio_algorithm_contact_cholesky_hpp__
