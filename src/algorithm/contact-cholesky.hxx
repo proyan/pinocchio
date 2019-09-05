@@ -87,7 +87,7 @@ namespace pinocchio
       for(size_t ee_id = 0; ee_id < extented_parents_fromRow.size(); ++ee_id)
       {
         BooleanVector & indexes = extented_parents_fromRow[ee_id];
-        const JointIndex joint_id = model.frames[contact_infos[ee_id].parent].parent;
+        const JointIndex joint_id = model.frames[contact_infos[ee_id].frame_id].parent;
         const typename Model::JointModel & joint = model.joints[joint_id];
         
         Eigen::DenseIndex current_id = joint.idx_v() + joint.nv() - 1 + num_total_constraints;
@@ -132,7 +132,7 @@ namespace pinocchio
       {
         if(contact_infos[f].reference_frame == WORLD) continue; // skip useless computations
         
-        const typename Model::FrameIndex & parent_frame_id = contact_infos[f].parent;
+        const typename Model::FrameIndex & parent_frame_id = contact_infos[f].frame_id;
         const typename Model::Frame & frame = model.frames[parent_frame_id];
         typename Data::SE3 & oMf = data.oMf[parent_frame_id];
         
@@ -217,7 +217,7 @@ namespace pinocchio
                 ColXpr Jcol = data.J.col(j);
                 MotionRef<ColXpr> Jcol_motion(Jcol);
                 
-                const typename Data::SE3 & oMf = data.oMf[cinfo.parent];
+                const typename Data::SE3 & oMf = data.oMf[cinfo.frame_id];
                 Motion Jcol_local(oMf.actInv(Jcol_motion));
                 
                 switch(cinfo.type)
@@ -249,7 +249,7 @@ namespace pinocchio
                 ColXpr Jcol = data.J.col(j);
                 MotionRef<ColXpr> Jcol_motion(Jcol);
                 
-                const typename Data::SE3 & oMf = data.oMf[cinfo.parent];
+                const typename Data::SE3 & oMf = data.oMf[cinfo.frame_id];
                 Motion Jcol_local_world_aligned(Jcol_motion);
                 Jcol_local_world_aligned.linear() -= oMf.translation().cross(Jcol_local_world_aligned.angular());
                 
