@@ -90,6 +90,8 @@ namespace pinocchio
       template<typename MatrixLike>
       void solveInPlace(const Eigen::MatrixBase<MatrixLike> & mat) const;
       
+      ///@{
+      /// \brief Vectorwize operations
       template<typename MatrixLike>
       void Uv(const Eigen::MatrixBase<MatrixLike> & mat) const;
       
@@ -101,11 +103,21 @@ namespace pinocchio
       
       template<typename MatrixLike>
       void Utiv(const Eigen::MatrixBase<MatrixLike> & mat) const;
+      ///@}
+      
+      /// \brief Returns the matrix resulting from the decomposition
+      Matrix matrix() const;
+      
+      /// \brief Fill the input matrix with the matrix resulting from the decomposition
+      template<typename MatrixType>
+      void matrix(const Eigen::MatrixBase<MatrixType> & res) const;
       
       // data
       Vector D, Dinv;
       Matrix U;
       
+      ///@{
+      /// \brief Friend algorithms
       template<typename MatrixLike, int ColsAtCompileTime>
       friend struct details::UvAlgo;
       
@@ -117,7 +129,7 @@ namespace pinocchio
       
       template<typename MatrixLike, int ColsAtCompileTime>
       friend struct details::UtivAlgo;
-      
+      ///@}
     protected:
       
       IndexVector parents_fromRow;
