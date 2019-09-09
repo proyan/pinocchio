@@ -5,9 +5,8 @@
 #ifndef __pinocchio_contact_dynamics_hxx__
 #define __pinocchio_contact_dynamics_hxx__
 
-#include "pinocchio/algorithm/compute-all-terms.hpp"
-#include "pinocchio/algorithm/cholesky.hpp"
-#include "pinocchio/algorithm/crba.hpp"
+#include "pinocchio/spatial/classic-acceleration.hpp"
+
 #include "pinocchio/algorithm/check.hpp"
 
 namespace pinocchio
@@ -22,6 +21,112 @@ namespace pinocchio
     data.contact_vector_solution.resize(data.contact_chol.dim());
     data.contact_forces.resize(contact_infos.size());
   }
+  
+  template<typename Scalar, int Options, template<typename,int> class JointCollectionTpl, typename ConfigVectorType, typename TangentVectorType>
+  struct ContactDynamicsForwardStep
+  : public fusion::JointVisitorBase< ContactDynamicsForwardStep<Scalar,Options,JointCollectionTpl,ConfigVectorType,TangentVectorType> >
+  {
+    typedef ModelTpl<Scalar,Options,JointCollectionTpl> Model;
+    typedef DataTpl<Scalar,Options,JointCollectionTpl> Data;
+    
+    typedef boost::fusion::vector<const Model &,
+                                  Data &,
+                                  const ConfigVectorType &,
+                                  const TangentVectorType &
+                                  > ArgsType;
+    
+    template<typename JointModel>
+    static void algo(const JointModelBase<JointModel> & jmodel,
+                     JointDataBase<typename JointModel::JointDataDerived> & jdata,
+                     const Model & model,
+                     Data & data,
+                     const Eigen::MatrixBase<ConfigVectorType> & q,
+                     const Eigen::MatrixBase<TangentVectorType> & v)
+    {
+      typedef typename Model::JointIndex JointIndex;
+      typedef typename Data::Motion Motion;
+      typedef typename Data::Force Force;
+      typedef typename Data::Inertia Inertia;
+      
+      const JointIndex & i = jmodel.id();
+      const JointIndex & parent = model.parents[i];
+      
+      Motion & ov = data.ov[i];
+      Motion & oa = data.oa[i];
+      Motion & oa_gf = data.oa_gf[i];
+      
+      Inertia & oYcrb = data.oYcrb[i];
+      
+      Force & oh = data.oh[i];
+      Force & of = data.of[i];
+      
+      jmodel.calc(jdata.derived(),q.derived(),v.derived());
+      
+      data.liMi[i] = model.jointPlacements[i]*jdata.M();
+      
+      data.v[i] = jdata.v();
+      
+      if(parent > 0)
+      {
+        data.oMi[i] = data.oMi[parent] * data.liMi[i];
+        data.v[i] += data.liMi[i].actInv(data.v[parent]);
+      }
+      else
+        data.oMi[i] = data.liMi[i];
+      
+      data.a[i] = jdata.c() + (data.v[i] ^ jdata.v());
+      if(parent > 0)
+        data.a[i] += data.liMi[i].actInv(data.a[parent]);
+      
+      jmodel.jointCols(data.J) = data.oMi[i].act(jdata.S());
+      oYcrb = data.oMi[i].act(model.inertias[i]);
+      
+      ov = data.oMi[i].act(data.v[i]);
+      oa = data.oMi[i].act(data.a[i]);
+      oa_gf = oa - model.gravity; // add gravity contribution
+      
+      oh = oYcrb * ov;
+      of = oYcrb * oa_gf + ov.cross(oh);
+    }
+    
+  };
+  
+  template<typename Scalar, int Options, template<typename,int> class JointCollectionTpl>
+  struct ContactDynamicsBackwardStep
+  : public fusion::JointVisitorBase< ContactDynamicsBackwardStep<Scalar,Options,JointCollectionTpl> >
+  {
+    typedef ModelTpl<Scalar,Options,JointCollectionTpl> Model;
+    typedef DataTpl<Scalar,Options,JointCollectionTpl> Data;
+    
+    typedef boost::fusion::vector<const Model &,
+                                  Data &
+                                 > ArgsType;
+    
+    template<typename JointModel>
+    static void algo(const JointModelBase<JointModel> & jmodel,
+                     const Model & model,
+                     Data & data)
+    {
+      typedef typename Model::JointIndex JointIndex;
+      typedef typename SizeDepType<JointModel::NV>::template ColsReturn<typename Data::Matrix6x>::Type ColsBlock;
+      const JointIndex & i = jmodel.id();
+
+      ColsBlock Ag_cols = jmodel.jointCols(data.Ag);
+      ColsBlock J_cols = jmodel.jointCols(data.J);
+      motionSet::inertiaAction(data.oYcrb[i],J_cols,Ag_cols);
+      
+      data.M.block(jmodel.idx_v(),jmodel.idx_v(),jmodel.nv(),data.nvSubtree[i]).noalias()
+      = J_cols.transpose()*data.Ag.middleCols(jmodel.idx_v(),data.nvSubtree[i]);
+      
+      jmodel.jointVelocitySelector(data.nle).noalias()
+      = J_cols.transpose()*data.of[i].toVector();
+      
+      const JointIndex & parent = model.parents[i];
+      data.of[parent] += data.of[i];
+      data.oYcrb[parent] += data.oYcrb[i];
+    }
+    
+  };
   
   template<typename Scalar, int Options, template<typename,int> class JointCollectionTpl, typename ConfigVectorType, typename TangentVectorType1, typename TangentVectorType2, class Allocator>
   inline const typename DataTpl<Scalar,Options,JointCollectionTpl>::TangentVectorType &
@@ -50,7 +155,33 @@ namespace pinocchio
     typename Data::ContactCholeskyDecomposition & contact_chol = data.contact_chol;
     typename Data::VectorXs & contact_vector_solution = data.contact_vector_solution;
     
-    computeAllTerms(model,data,q.derived(),v.derived());
+    data.oYcrb[0].setZero();
+    data.of[0].setZero();
+    typedef ContactDynamicsForwardStep<Scalar,Options,JointCollectionTpl,ConfigVectorType,TangentVectorType1> Pass1;
+    for(JointIndex i=1;i<(JointIndex) model.njoints;++i)
+    {
+      Pass1::run(model.joints[i],data.joints[i],
+                 typename Pass1::ArgsType(model,data,q.derived(),v.derived()));
+    }
+    
+    typedef ContactDynamicsBackwardStep<Scalar,Options,JointCollectionTpl> Pass2;
+    for(JointIndex i=(JointIndex)(model.njoints-1);i>0;--i)
+    {
+      Pass2::run(model.joints[i],
+                 typename Pass2::ArgsType(model,data));
+    }
+    
+    // Retrieve the Centroidal Momemtum map
+    typedef DataTpl<Scalar,Options,JointCollectionTpl> Data;
+    typedef typename Data::Force Force;
+    typedef Eigen::Block<typename Data::Matrix6x,3,-1> Block3x;
+    
+    data.com[0] = data.oYcrb[0].lever();
+    
+    const Block3x Ag_lin = data.Ag.template middleRows<3>(Force::LINEAR);
+    Block3x Ag_ang = data.Ag.template middleRows<3>(Force::ANGULAR);
+    for(long i = 0; i<model.nv; ++i)
+      Ag_ang.col(i) += Ag_lin.col(i).cross(data.com[0]);
 
     // Computes the Cholesky decomposition
     contact_chol.compute(model,data,contact_infos,mu);
