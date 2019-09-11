@@ -2,8 +2,8 @@
 // Copyright (c) 2019 INRIA
 //
 
-#ifndef __pinocchio_contact_dynamics_hxx__
-#define __pinocchio_contact_dynamics_hxx__
+#ifndef __pinocchio_algorithm_contact_dynamics_hxx__
+#define __pinocchio_algorithm_contact_dynamics_hxx__
 
 #include "pinocchio/spatial/classic-acceleration.hpp"
 
@@ -321,4 +321,4 @@ namespace pinocchio
   
 } // namespace pinocchio
 
-#endif // ifndef __pinocchio_contact_dynamics_hxx__
+#endif // ifndef __pinocchio_algorithm_contact_dynamics_hxx__
