@@ -410,7 +410,7 @@ namespace pinocchio
           VectorLike & vec_ = PINOCCHIO_EIGEN_CONST_CAST(VectorLike,vec);
           
           assert(vec.size() == chol.dim() && "The input vector is of wrong size");
-          const Eigen::DenseIndex num_total_constraints = chol.dim() - chol.nv;
+          const Eigen::DenseIndex num_total_constraints = chol.constraintDim();
           
           for(Eigen::DenseIndex k = chol.dim()-2; k >= num_total_constraints; --k)
             vec_.segment(k+1,chol.nv_subtree_fromRow[k]-1)
@@ -517,7 +517,7 @@ namespace pinocchio
           VectorLike & vec_ = PINOCCHIO_EIGEN_CONST_CAST(VectorLike,vec);
           
           assert(vec.size() == chol.dim() && "The input vector is of wrong size");
-          const Eigen::DenseIndex num_total_constraints = chol.dim() - chol.nv;
+          const Eigen::DenseIndex num_total_constraints = chol.constraintDim();
           
           // TODO: exploit the Sparsity pattern of the first rows of U
           for(Eigen::DenseIndex k = 0; k < num_total_constraints; ++k)
