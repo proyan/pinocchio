@@ -317,6 +317,17 @@ namespace pinocchio
       Utiv(mat_);
     }
     
+    template<typename Scalar, int Options>
+    template<typename MatrixLike>
+    typename ContactCholeskyDecompositionTpl<Scalar,Options>::Matrix
+    ContactCholeskyDecompositionTpl<Scalar,Options>::
+    solve(const Eigen::MatrixBase<MatrixLike> & mat) const
+    {
+      Matrix res(mat);
+      solveInPlace(res);
+      return res;
+    }
+    
     namespace details
     {
       template<typename MatrixLike, int ColsAtCompileTime>
