@@ -174,22 +174,44 @@ BOOST_AUTO_TEST_CASE(test_sparse_forward_dynamics_double_init)
   pinocchio::buildModels::humanoidRandom(model,true);
   pinocchio::Data data1(model), data2(model);
   
-  const std::string RF = "rleg6_joint";
-  //  const Model::JointIndex RF_id = model.getJointId(RF);
-  const std::string LF = "lleg6_joint";
-  //  const Model::JointIndex LF_id = model.getJointId(LF);
+  model.lowerPositionLimit.head<3>().fill(-1.);
+  model.upperPositionLimit.head<3>().fill( 1.);
+  VectorXd q = randomConfiguration(model);
   
+  VectorXd v = VectorXd::Random(model.nv);
+  VectorXd tau = VectorXd::Random(model.nv);
+  
+  const std::string RF = "rleg6_joint";
+  const std::string LF = "lleg6_joint";
+
   // Contact info
   const PINOCCHIO_STD_VECTOR_WITH_EIGEN_ALLOCATOR(ContactInfo) contact_infos_empty;
   PINOCCHIO_STD_VECTOR_WITH_EIGEN_ALLOCATOR(ContactInfo) contact_infos_6D;
+  PINOCCHIO_STD_VECTOR_WITH_EIGEN_ALLOCATOR(ContactInfo) contact_infos_6D6D;
   ContactInfo ci_RF(CONTACT_6D,model.getFrameId(RF),WORLD);
   contact_infos_6D.push_back(ci_RF);
+  contact_infos_6D6D.push_back(ci_RF);
   ContactInfo ci_LF(CONTACT_6D,model.getFrameId(LF),WORLD);
-  contact_infos_6D.push_back(ci_LF);
+  contact_infos_6D6D.push_back(ci_LF);
   
   initContactDynamics(model,data1,contact_infos_empty);
-  initContactDynamics(model,data1,contact_infos_6D);
+  BOOST_CHECK(data1.contact_chol.dim() == (model.nv + 0));
+  contactDynamics(model,data1,q,v,tau,contact_infos_empty);
+  BOOST_CHECK(!hasNaN(data1.ddq));
   
+  initContactDynamics(model,data1,contact_infos_6D);
+  BOOST_CHECK(data1.contact_chol.dim() == (model.nv + 1*6));
+  contactDynamics(model,data1,q,v,tau,contact_infos_6D);
+  BOOST_CHECK(!hasNaN(data1.ddq));
+  
+  std::cout << "initContactDynamics" << std::endl;
+  initContactDynamics(model,data1,contact_infos_6D6D);
+  BOOST_CHECK(data1.contact_chol.dim() == (model.nv + 2*6));
+  std::cout << "contactDynamics" << std::endl;
+  contactDynamics(model,data1,q,v,tau,contact_infos_6D6D);
+  BOOST_CHECK(!hasNaN(data1.ddq));
+  
+  initContactDynamics(model,data2,contact_infos_6D6D);
   initContactDynamics(model,data2,contact_infos_6D);
   initContactDynamics(model,data2,contact_infos_empty);
 }
