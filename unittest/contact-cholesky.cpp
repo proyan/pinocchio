@@ -2,6 +2,8 @@
 // Copyright (c) 2019 INRIA
 //
 
+#include <iostream>
+
 #include "pinocchio/spatial/se3.hpp"
 #include "pinocchio/multibody/model.hpp"
 #include "pinocchio/multibody/data.hpp"
@@ -14,7 +16,6 @@
 #include "pinocchio/algorithm/joint-configuration.hpp"
 #include "pinocchio/parsers/sample-models.hpp"
 
-#include <iostream>
 
 #include <boost/test/unit_test.hpp>
 #include <boost/utility/binary.hpp>
@@ -190,6 +191,13 @@ BOOST_AUTO_TEST_CASE(contact_cholesky_simple)
   // solve
   MatrixXd sol_copy_mat = contact_chol_decomposition.solve(mat_in);
   BOOST_CHECK(sol_copy_mat.isApprox(sol_mat));
+  
+  // inverse
+  MatrixXd M_inv(model.nv,model.nv);
+  contact_chol_decomposition.inverse(M_inv);
+  
+  MatrixXd M_inv_ref = data.M.inverse();
+  BOOST_CHECK(M_inv.isApprox(M_inv_ref));
 }
 
 BOOST_AUTO_TEST_CASE(contact_cholesky_contact6D)
@@ -378,6 +386,13 @@ BOOST_AUTO_TEST_CASE(contact_cholesky_contact6D)
   MatrixXd sol_copy_mat = contact_chol_decomposition.solve(mat_in);
   BOOST_CHECK(sol_copy_mat.isApprox(sol_mat));
   
+  // inverse
+  MatrixXd H_inv(contact_chol_decomposition.dim(),contact_chol_decomposition.dim());
+  contact_chol_decomposition.inverse(H_inv);
+  
+  MatrixXd H_inv_ref = H.inverse();
+  BOOST_CHECK(H_inv.isApprox(H_inv_ref));
+  
   // Check matrix
   MatrixXd mat1;
   contact_chol_decomposition.matrix(mat1);
@@ -557,6 +572,13 @@ BOOST_AUTO_TEST_CASE(contact_cholesky_contact3D_6D)
   MatrixXd sol_copy_mat = contact_chol_decomposition.solve(mat_in);
   BOOST_CHECK(sol_copy_mat.isApprox(sol_mat));
   
+  // inverse
+  MatrixXd H_inv(contact_chol_decomposition.dim(),contact_chol_decomposition.dim());
+  contact_chol_decomposition.inverse(H_inv);
+  
+  MatrixXd H_inv_ref = H.inverse();
+  BOOST_CHECK(H_inv.isApprox(H_inv_ref));
+  
   // Check matrix
   MatrixXd mat1;
   contact_chol_decomposition.matrix(mat1);
@@ -628,11 +650,18 @@ BOOST_AUTO_TEST_CASE(contact_cholesky_contact6D_LOCAL)
   data.M.triangularView<Eigen::StrictlyLower>() =
   data.M.triangularView<Eigen::StrictlyUpper>().transpose();
   
-  Data::MatrixXs H_recomposed = contact_chol_decomposition.U * contact_chol_decomposition.D.asDiagonal() * contact_chol_decomposition.U.transpose();
+  Data::MatrixXs H_recomposed = contact_chol_decomposition.matrix();
   
   BOOST_CHECK(H_recomposed.bottomRightCorner(model.nv,model.nv).isApprox(data.M));
   BOOST_CHECK(H_recomposed.topRightCorner(constraint_dim,model.nv).isApprox(H.topRightCorner(constraint_dim,model.nv)));
   BOOST_CHECK(H_recomposed.isApprox(H));
+  
+  // inverse
+  MatrixXd H_inv(contact_chol_decomposition.dim(),contact_chol_decomposition.dim());
+  contact_chol_decomposition.inverse(H_inv);
+  
+  MatrixXd H_inv_ref = H_recomposed.inverse();
+  BOOST_CHECK(H_inv.isApprox(H_inv_ref));
 }
 
 BOOST_AUTO_TEST_CASE(contact_cholesky_contact6D_LOCAL_WORLD_ALIGNED)
@@ -693,11 +722,18 @@ BOOST_AUTO_TEST_CASE(contact_cholesky_contact6D_LOCAL_WORLD_ALIGNED)
   data.M.triangularView<Eigen::StrictlyLower>() =
   data.M.triangularView<Eigen::StrictlyUpper>().transpose();
   
-  Data::MatrixXs H_recomposed = contact_chol_decomposition.U * contact_chol_decomposition.D.asDiagonal() * contact_chol_decomposition.U.transpose();
+  Data::MatrixXs H_recomposed = contact_chol_decomposition.matrix();
   
   BOOST_CHECK(H_recomposed.bottomRightCorner(model.nv,model.nv).isApprox(data.M));
   BOOST_CHECK(H_recomposed.topRightCorner(constraint_dim,model.nv).isApprox(H.topRightCorner(constraint_dim,model.nv)));
   BOOST_CHECK(H_recomposed.isApprox(H));
+  
+  // inverse
+  MatrixXd H_inv(contact_chol_decomposition.dim(),contact_chol_decomposition.dim());
+  contact_chol_decomposition.inverse(H_inv);
+  
+  MatrixXd H_inv_ref = H_recomposed.inverse();
+  BOOST_CHECK(H_inv.isApprox(H_inv_ref));
 }
 
 BOOST_AUTO_TEST_SUITE_END()
