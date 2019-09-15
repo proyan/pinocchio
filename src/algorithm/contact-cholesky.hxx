@@ -655,8 +655,6 @@ namespace pinocchio
         EIGEN_STATIC_ASSERT_VECTOR_ONLY(VectorLike);
         
         typedef ContactCholeskyDecompositionTpl<Scalar,Options> ContactCholeskyDecomposition;
-        typedef typename ContactCholeskyDecomposition::SliceVector SliceVector;
-        typedef typename ContactCholeskyDecomposition::Slice Slice;
         typedef typename ContactCholeskyDecomposition::RowMatrix RowMatrix;
         
         const Eigen::DenseIndex & chol_dim = chol.dim();
@@ -682,6 +680,8 @@ namespace pinocchio
 //          }
 //          else
 //          {
+//            typedef typename ContactCholeskyDecomposition::SliceVector SliceVector;
+//            typedef typename ContactCholeskyDecomposition::Slice Slice;
 //            const SliceVector & slice_vector = chol.rowise_sparsity_pattern[(size_t)k];
 //
 //            const Slice & slice_0 = slice_vector[0];
