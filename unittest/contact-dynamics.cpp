@@ -275,8 +275,12 @@ BOOST_AUTO_TEST_CASE(test_sparse_forward_dynamics_in_contact_6D)
   forwardDynamics(model,data_ref,q,v,tau,J_ref,rhs_ref,mu0);
   forwardKinematics(model,data_ref,q,v,data_ref.ddq);
   
+  BOOST_CHECK((J_ref*data_ref.ddq+rhs_ref).isZero());
+  
   initContactDynamics(model,data,contact_infos);
   contactDynamics(model,data,q,v,tau,contact_infos,mu0);
+  
+  BOOST_CHECK((J_ref*data.ddq+rhs_ref).isZero());
   
   data.M.triangularView<Eigen::StrictlyLower>() =
   data.M.transpose().triangularView<Eigen::StrictlyLower>();
@@ -398,8 +402,12 @@ BOOST_AUTO_TEST_CASE(test_sparse_forward_dynamics_in_contact_6D_LOCAL)
   forwardDynamics(model,data_ref,q,v,tau,J_ref,rhs_ref,mu0);
   forwardKinematics(model,data_ref,q,v,data_ref.ddq);
   
+  BOOST_CHECK((J_ref*data_ref.ddq+rhs_ref).isZero());
+  
   initContactDynamics(model,data,contact_infos);
   contactDynamics(model,data,q,v,tau,contact_infos,mu0);
+  
+  BOOST_CHECK((J_ref*data.ddq+rhs_ref).isZero());
   
   // Check that the decomposition is correct
   const Data::ContactCholeskyDecomposition & contact_chol = data.contact_chol;
@@ -614,6 +622,7 @@ BOOST_AUTO_TEST_CASE(test_sparse_forward_dynamics_in_contact_6D_LOCAL_WORLD_ALIG
   
   // Check solutions
   BOOST_CHECK(data.ddq.isApprox(data_ref.ddq));
+  BOOST_CHECK((J_ref*data.ddq+rhs_ref).isZero());
   
   Eigen::DenseIndex constraint_id = 0;
   for(size_t k = 0; k < contact_infos.size(); ++k)
