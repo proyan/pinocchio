@@ -198,7 +198,7 @@ namespace pinocchio
     RowMatrix6 M6tmpR;
     RowMatrix6 M6tmpR2;
     
-    /// \brief The joint accelerations computed from ABA
+    /// \brief The joint accelerations computed by ABA
     TangentVectorType ddq;
     
     // ABA internal data
