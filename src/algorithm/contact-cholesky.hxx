@@ -351,7 +351,7 @@ namespace pinocchio
                     assert(false && "Must never happened");
                 }
                 break;
-              } // end case LOCAL
+              } // end case LOCAL_WORLD_ALIGNED
               default:
                 assert(false && "Must never happened");
             } // end switch(cinfo.reference_frame)
@@ -361,7 +361,7 @@ namespace pinocchio
 
       }
 
-      /// Upper left diagonal part of U
+      // Upper left diagonal part of U
       for(Eigen::DenseIndex j = total_constraints_dim-1; j>=0; --j)
       {
         const Eigen::DenseIndex slice_dim = total_dim - j - 1;
