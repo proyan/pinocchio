@@ -20,7 +20,7 @@ namespace pinocchio
                                   const std::vector<ContactInfoTpl<Scalar,Options>,Allocator> & contact_infos)
   {
     data.contact_chol.allocate(model,contact_infos);
-    data.contact_vector_solution.resize(data.contact_chol.dim());
+    data.contact_vector_solution.resize(data.contact_chol.size());
     data.contact_forces.resize(contact_infos.size());
   }
   
@@ -201,7 +201,7 @@ namespace pinocchio
         it != contact_infos.end(); ++it)
     {
       const ContactInfo & contact_info = *it;
-      const int contact_dim = contact_info.dim();
+      const int contact_dim = contact_info.size();
 
       const typename Model::FrameIndex & frame_id = contact_info.frame_id;
       const typename Model::Frame & frame = model.frames[frame_id];
@@ -293,7 +293,7 @@ namespace pinocchio
     {
       typename Data::Force & fext = data.contact_forces[current_id];
       const ContactInfo & contact_info = *it;
-      const int contact_dim = contact_info.dim();
+      const int contact_dim = contact_info.size();
       
       switch(contact_info.type)
       {
