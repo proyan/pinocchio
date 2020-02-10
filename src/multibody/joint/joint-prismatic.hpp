@@ -552,6 +552,7 @@ namespace pinocchio
     U_t U;
     D_t Dinv;
     UD_t UDinv;
+    D_t StU;
 
     JointDataPrismaticTpl()
     : M((Scalar)0)
@@ -559,6 +560,7 @@ namespace pinocchio
     , U(U_t::Zero())
     , Dinv(D_t::Zero())
     , UDinv(UD_t::Zero())
+    , StU(D_t::Zero())
     {}
 
     static std::string classname()

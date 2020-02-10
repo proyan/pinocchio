@@ -650,6 +650,7 @@ namespace pinocchio
     U_t U;
     D_t Dinv;
     UD_t UDinv;
+    D_t StU;
 
     JointDataRevoluteTpl()
     : M((Scalar)0,(Scalar)1)
@@ -657,6 +658,7 @@ namespace pinocchio
     , U(U_t::Zero())
     , Dinv(D_t::Zero())
     , UDinv(UD_t::Zero())
+    , StU(D_t::Zero())
     {}
 
     static std::string classname()
