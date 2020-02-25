@@ -60,37 +60,26 @@ namespace pinocchio
       
       bp::def("computeGeneralizedGravityDerivatives",
               computeGeneralizedGravityDerivatives,
-              bp::args("Model","Data",
-                       "q: configuration vector (size model.nq)"),
+              bp::args("model","data","q"),
               "Computes the partial derivative of the generalized gravity contribution\n"
               "with respect to the joint configuration.");
               
       bp::def("computeStaticTorqueDerivatives",
               computeStaticTorqueDerivatives,
-              bp::args("Model: model of the kinematic tree",
-                       "Data: data of the kinematic tree",
-                       "q: configuration vector (size model.nq)",
-                       "fext: vector of external forces expressed in the local frame of the joints (size model.njoints)"),
+              bp::args("model","data","q","fext"),
               "Computes the partial derivative of the generalized gravity and external forces contributions (a.k.a static torque vector)\n"
               "with respect to the joint configuration.");
       
       bp::def("computeRNEADerivatives",
               computeRNEADerivatives,
-              bp::args("Model","Data",
-                       "q: configuration vector (size model.nq)",
-                       "v: velocity vector (size model.nv)",
-                       "a: acceleration vector (size model.nv)"),
+              bp::args("model","data","q","v","a"),
               "Computes the RNEA partial derivatives, store the result in data.dtau_dq, data.dtau_dv and data.dtau_da\n"
               "which correspond to the partial derivatives of the torque output with respect to the joint configuration,\n"
               "velocity and acceleration vectors.");
       
       bp::def("computeRNEADerivatives",
               computeRNEADerivatives_fext,
-              bp::args("Model","Data",
-                       "q: configuration vector (size model.nq)",
-                       "v: velocity vector (size model.nv)",
-                       "a: acceleration vector (size model.nv)",
-                       "fext: vector of external forces expressed in the local frame of the joints (size model.njoints)"),
+              bp::args("model","data","q","v","a","fext"),
               "Computes the RNEA partial derivatives with external contact foces,\n"
               "store the result in data.dtau_dq, data.dtau_dv and data.dtau_da\n"
               "which correspond to the partial derivatives of the torque output with respect to the joint configuration,\n"
