@@ -193,11 +193,6 @@ namespace pinocchio
     /// \brief Temporary for derivative algorithms
     Matrix6 Itmp;
     
-    /// \brief Temporary for derivative algorithms
-    Matrix6 M6tmp;
-    RowMatrix6 M6tmpR;
-    RowMatrix6 M6tmpR2;
-    
     /// \brief The joint accelerations computed by ABA
     TangentVectorType ddq;
     
