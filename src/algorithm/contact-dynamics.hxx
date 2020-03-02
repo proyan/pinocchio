@@ -17,11 +17,11 @@ namespace pinocchio
   template<typename Scalar, int Options, template<typename,int> class JointCollectionTpl, class Allocator>
   inline void initContactDynamics(const ModelTpl<Scalar,Options,JointCollectionTpl> & model,
                                   DataTpl<Scalar,Options,JointCollectionTpl> & data,
-                                  const std::vector<ContactInfoTpl<Scalar,Options>,Allocator> & contact_infos)
+                                  const std::vector<RigidContactModelTpl<Scalar,Options>,Allocator> & contact_models)
   {
-    data.contact_chol.allocate(model,contact_infos);
+    data.contact_chol.allocate(model,contact_models);
     data.contact_vector_solution.resize(data.contact_chol.size());
-    data.contact_forces.resize(contact_infos.size());
+    data.contact_forces.resize(contact_models.size());
   }
   
   template<typename Scalar, int Options, template<typename,int> class JointCollectionTpl, typename ConfigVectorType, typename TangentVectorType>
@@ -137,7 +137,7 @@ namespace pinocchio
                   const Eigen::MatrixBase<ConfigVectorType> & q,
                   const Eigen::MatrixBase<TangentVectorType1> & v,
                   const Eigen::MatrixBase<TangentVectorType2> & tau,
-                  const std::vector<ContactInfoTpl<Scalar,Options>,Allocator> & contact_infos,
+                  const std::vector<RigidContactModelTpl<Scalar,Options>,Allocator> & contact_models,
                   const Scalar mu)
   {
     assert(q.size() == model.nq);
@@ -169,7 +169,7 @@ namespace pinocchio
     typedef ContactDynamicsBackwardStep<Scalar,Options,JointCollectionTpl> Pass2;
     for(JointIndex i=(JointIndex)(model.njoints-1);i>0;--i)
     {
-      Pass2::run(model.joints[i],
+      Pass2::run(model.joints[i],data.joints[i],
                  typename Pass2::ArgsType(model,data));
     }
     
@@ -186,7 +186,7 @@ namespace pinocchio
       Ag_ang.col(i) += Ag_lin.col(i).cross(data.com[0]);
 
     // Computes the Cholesky decomposition
-    contact_chol.compute(model,data,contact_infos,mu);
+    contact_chol.compute(model,data,contact_models,mu);
 
     contact_vector_solution.tail(model.nv) = tau - data.nle;
 
@@ -197,8 +197,8 @@ namespace pinocchio
     typename Motion::Vector3 coriolis_centrifugal_acc_local;
 
     Eigen::DenseIndex current_row_id = 0;
-    for(typename ContactInfoVector::const_iterator it = contact_infos.begin();
-        it != contact_infos.end(); ++it)
+    for(typename RigidContactModelVector::const_iterator it = contact_models.begin();
+        it != contact_models.end(); ++it)
     {
       const ContactInfo & contact_info = *it;
       const int contact_dim = contact_info.size();
@@ -288,8 +288,8 @@ namespace pinocchio
     // Retrieve the contact forces
     size_t current_id = 0;
     Eigen::DenseIndex current_row_sol_id = 0;
-    for(typename ContactInfoVector::const_iterator it = contact_infos.begin();
-        it != contact_infos.end(); ++it, current_id++)
+    for(typename RigidContactModelVector::const_iterator it = contact_models.begin();
+        it != contact_models.end(); ++it, current_id++)
     {
       typename Data::Force & fext = data.contact_forces[current_id];
       const ContactInfo & contact_info = *it;
