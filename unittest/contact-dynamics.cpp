@@ -65,7 +65,7 @@ pinocchio::Motion computeFrameAcc(const pinocchio::Model & model,
                                   pinocchio::ReferenceFrame reference_frame)
 {
   using namespace pinocchio;
-  Model::JointIndex joint_id = model.frames[frame_id].parent;
+  const Model::JointIndex& joint_id = model.frames[frame_id].parent;
   Motion res(Motion::Zero());
   
   updateFramePlacement(model,data,frame_id);
@@ -316,19 +316,19 @@ BOOST_AUTO_TEST_CASE(test_sparse_forward_dynamics_in_contact_6D)
   for(size_t k = 0; k < contact_models.size(); ++k)
   {
     const RigidContactModel & cinfo = contact_models[k];
-    
+    const Model::JointIndex& joint_id = model.frames[cinfo.frame_id].parent;    
     switch(cinfo.type)
     {
       case pinocchio::CONTACT_3D:
       {
-        BOOST_CHECK(data.contact_forces[k].linear().isApprox(data_ref.lambda_c.segment(constraint_id,cinfo.size())));
+        BOOST_CHECK(data.contact_forces[joint_id].linear().isApprox(data_ref.lambda_c.segment(constraint_id,cinfo.size())));
         break;
       }
         
       case pinocchio::CONTACT_6D:
       {
         ForceRef<Data::VectorXs::FixedSegmentReturnType<6>::Type> f_ref(data_ref.lambda_c.segment<6>(constraint_id));
-        BOOST_CHECK(data.contact_forces[k].isApprox(f_ref));
+        BOOST_CHECK(data.contact_forces[joint_id].isApprox(f_ref));
         break;
       }
         
@@ -424,19 +424,19 @@ BOOST_AUTO_TEST_CASE(test_sparse_forward_dynamics_in_contact_6D_LOCAL)
   for(size_t k = 0; k < contact_models.size(); ++k)
   {
     const RigidContactModel & cinfo = contact_models[k];
-    
+    const Model::JointIndex& joint_id = model.frames[cinfo.frame_id].parent;
     switch(cinfo.type)
     {
       case pinocchio::CONTACT_3D:
       {
-        BOOST_CHECK(data.contact_forces[k].linear().isApprox(data_ref.lambda_c.segment(constraint_id,cinfo.size())));
+        BOOST_CHECK(data.contact_forces[joint_id].linear().isApprox(data_ref.lambda_c.segment(constraint_id,cinfo.size())));
         break;
       }
         
       case pinocchio::CONTACT_6D:
       {
         ForceRef<Data::VectorXs::FixedSegmentReturnType<6>::Type> f_ref(data_ref.lambda_c.segment<6>(constraint_id));
-        BOOST_CHECK(data.contact_forces[k].isApprox(f_ref));
+        BOOST_CHECK(data.contact_forces[joint_id].isApprox(f_ref));
         break;
       }
         
@@ -524,19 +524,19 @@ BOOST_AUTO_TEST_CASE(test_sparse_forward_dynamics_in_contact_6D_3D)
   for(size_t k = 0; k < contact_models.size(); ++k)
   {
     const RigidContactModel & cinfo = contact_models[k];
-    
+    const Model::JointIndex& joint_id = model.frames[cinfo.frame_id].parent;    
     switch(cinfo.type)
     {
       case pinocchio::CONTACT_3D:
       {
-        BOOST_CHECK(data.contact_forces[k].linear().isApprox(data_ref.lambda_c.segment(constraint_id,cinfo.size())));
+        BOOST_CHECK(data.contact_forces[joint_id].linear().isApprox(data_ref.lambda_c.segment(constraint_id,cinfo.size())));
         break;
       }
         
       case pinocchio::CONTACT_6D:
       {
         ForceRef<Data::VectorXs::FixedSegmentReturnType<6>::Type> f_ref(data_ref.lambda_c.segment<6>(constraint_id));
-        BOOST_CHECK(data.contact_forces[k].isApprox(f_ref));
+        BOOST_CHECK(data.contact_forces[joint_id].isApprox(f_ref));
         break;
       }
         
@@ -629,19 +629,19 @@ BOOST_AUTO_TEST_CASE(test_sparse_forward_dynamics_in_contact_6D_LOCAL_WORLD_ALIG
   for(size_t k = 0; k < contact_models.size(); ++k)
   {
     const RigidContactModel & cinfo = contact_models[k];
-    
+    const Model::JointIndex& joint_id = model.frames[cinfo.frame_id].parent;    
     switch(cinfo.type)
     {
       case pinocchio::CONTACT_3D:
       {
-        BOOST_CHECK(data.contact_forces[k].linear().isApprox(data_ref.lambda_c.segment(constraint_id,cinfo.size())));
+        BOOST_CHECK(data.contact_forces[joint_id].linear().isApprox(data_ref.lambda_c.segment(constraint_id,cinfo.size())));
         break;
       }
         
       case pinocchio::CONTACT_6D:
       {
         ForceRef<Data::VectorXs::FixedSegmentReturnType<6>::Type> f_ref(data_ref.lambda_c.segment<6>(constraint_id));
-        BOOST_CHECK(data.contact_forces[k].isApprox(f_ref));
+        BOOST_CHECK(data.contact_forces[joint_id].isApprox(f_ref));
         break;
       }
         
