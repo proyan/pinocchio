@@ -187,8 +187,13 @@ namespace pinocchio
     typedef SE3Tpl<Scalar,Options> SE3;
     typedef MotionTpl<Scalar,Options> Motion;
     typedef ForceTpl<Scalar,Options> Force;
+    typedef Eigen::Matrix<Scalar,6,Eigen::Dynamic,Options> Matrix6x;
     
-    RigidContactDataTpl()
+    RigidContactDataTpl(int nv) :
+      v_partial_dq(Matrix6x::Zero(6, nv))
+      , a_partial_dq(Matrix6x::Zero(6, nv))
+      , a_partial_dv(Matrix6x::Zero(6, nv))
+      , a_partial_da(Matrix6x::Zero(6, nv))
     {}
     
     // data
@@ -210,6 +215,13 @@ namespace pinocchio
     
     /// \brief Contact deviation from the reference acceleration (a.k.a the error)
     Motion contact_deviation;
+
+    /// \brief Contact kinematic derivatives
+    Matrix6x v_partial_dq;
+    Matrix6x a_partial_dq;
+    Matrix6x a_partial_dv;
+    Matrix6x a_partial_da;
+
   };
   
   typedef RigidContactModelTpl<double,0> RigidContactModel;
