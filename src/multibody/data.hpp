@@ -300,6 +300,7 @@ namespace pinocchio
 
     
     MatrixXs dac_dq;
+    MatrixXs dac_dvq;
 
     /// \brief Operational space inertia matrix;
     MatrixXs osim;

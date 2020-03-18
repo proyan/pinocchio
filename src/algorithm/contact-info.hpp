@@ -183,13 +183,14 @@ namespace pinocchio
     
     typedef _Scalar Scalar;
     enum { Options = _Options };
-    
+
+    typedef RigidContactModelTpl<Scalar, Options> RigidContactModel;
     typedef SE3Tpl<Scalar,Options> SE3;
     typedef MotionTpl<Scalar,Options> Motion;
     typedef ForceTpl<Scalar,Options> Force;
     typedef Eigen::Matrix<Scalar,6,Eigen::Dynamic,Options> Matrix6x;
-    
-    RigidContactDataTpl(int nv) :
+    //TODO: change matrix sizes
+    explicit RigidContactDataTpl(int nv) :
       v_partial_dq(Matrix6x::Zero(6, nv))
       , a_partial_dq(Matrix6x::Zero(6, nv))
       , a_partial_dv(Matrix6x::Zero(6, nv))
@@ -217,6 +218,7 @@ namespace pinocchio
     Motion contact_deviation;
 
     /// \brief Contact kinematic derivatives
+    ///TODO: Use fixed size matrices after crtp
     Matrix6x v_partial_dq;
     Matrix6x a_partial_dq;
     Matrix6x a_partial_dv;
