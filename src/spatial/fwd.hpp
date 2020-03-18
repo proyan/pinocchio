@@ -28,6 +28,14 @@ namespace pinocchio
   
   template<typename Scalar, int Options=0> class InertiaTpl;
   template<typename Scalar, int Options=0> class Symmetric3Tpl;
+
+  enum AssignmentOperatorType
+  {
+    SETTO,
+    ADDTO,
+    RMTO
+  };
+  
   
   namespace internal
   {

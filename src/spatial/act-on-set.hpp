@@ -10,14 +10,7 @@
 
 namespace pinocchio
 {
-  
-  enum AssignmentOperatorType
-  {
-    SETTO,
-    ADDTO,
-    RMTO
-  };
-  
+
   namespace forceSet
   {
     ///
