@@ -5,6 +5,8 @@
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
+SET(CMAKE_CXX_COMPILER /usr/bin/clang++-10)
+
 SET(PROJECT_NAME pinocchio)
 SET(PROJECT_DESCRIPTION "A fast and flexible implementation of Rigid Body Dynamics algorithms and their analytical derivatives")
 SET(PROJECT_URL "http://github.com/stack-of-tasks/pinocchio")
@@ -45,7 +47,7 @@ ENDIF(WIN32)
 # --- OPTIONS ----------------------------------------
 OPTION(BUILD_BENCHMARK "Build the benchmarks" OFF)
 OPTION(BUILD_UTILS "Build the utils" OFF)
-OPTION(BUILD_PYTHON_INTERFACE "Build the Python binding" ON)
+OPTION(BUILD_PYTHON_INTERFACE "Build the Python binding" OFF)
 OPTION(BUILD_WITH_COMMIT_VERSION "Build libraries by setting specific commit version" OFF)
 
 IF(DEFINED BUILD_UNIT_TESTS)
@@ -54,15 +56,15 @@ IF(DEFINED BUILD_UNIT_TESTS)
     we suggest that you delete your build folder and make a new one.")
   SET(BUILD_TESTING ${BUILD_UNIT_TESTS})
 ENDIF(DEFINED BUILD_UNIT_TESTS)
-
+SET(BUILD_TESTING OFF)
 OPTION(BUILD_ADVANCED_TESTING "Build the advanced tests (multiprecision, etc.) of Pinocchio" OFF)
 
 # --- OPTIONAL DEPENDENCIES -------------------------
 OPTION(BUILD_WITH_URDF_SUPPORT "Build the library with the URDF format support" ON)
 OPTION(BUILD_WITH_COLLISION_SUPPORT "Build the library with the collision support (required HPP-FCL)" OFF)
-OPTION(BUILD_WITH_AUTODIFF_SUPPORT "Build the library with the automatic differentiation support (via CppAD)" OFF)
+OPTION(BUILD_WITH_AUTODIFF_SUPPORT "Build the library with the automatic differentiation support (via CppAD)" ON)
 OPTION(BUILD_WITH_CASADI_SUPPORT "Build the library with the support of CASADI" OFF)
-OPTION(BUILD_WITH_CODEGEN_SUPPORT "Build the library with the support of code generation (via CppADCodeGen)" OFF)
+OPTION(BUILD_WITH_CODEGEN_SUPPORT "Build the library with the support of code generation (via CppADCodeGen)" ON)
 
 OPTION(INITIALIZE_WITH_NAN "Initialize Eigen entries with NaN" OFF)
 
